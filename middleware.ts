@@ -8,11 +8,11 @@ export async function middleware (request: NextRequest) {
   const userHasSession = session.user !== null
 
   if (!userHasSession && pathname !== '/login' && pathname !== '/register') {
-    NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (userHasSession && (pathname === '/login' || pathname === '/register')) {
-    NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return response
