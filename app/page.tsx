@@ -28,7 +28,8 @@ export default async function Index () {
   
       <div className='animate-in flex-1 flex flex-col gap-20 opacity-0 max-w-4xl px-3'>
         <Header />
-        <div className='w-60 '>
+        <div> 
+          El me enseña:
           <img src='/perro.jpg' alt="Perro Logo" />
         </div>
       </div>
