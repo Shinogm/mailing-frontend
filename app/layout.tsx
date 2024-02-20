@@ -9,7 +9,7 @@ const defaultUrl = process.env.VERCEL_URL != null
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: 'Mailing Service',
-  description: 'Envia correos electrónicos a tus clientes de forma sencilla y rápida',
+  description: 'Envia '
 }
 
 export default function RootLayout ({
