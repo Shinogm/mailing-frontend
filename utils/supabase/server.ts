@@ -1,6 +1,10 @@
+'use server'
+
 import { Database } from '@/database.types'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export const createClient = () => {
   const cookieStore = cookies()
@@ -34,4 +38,51 @@ export const createClient = () => {
       }
     }
   )
+}
+
+export const addMail = async (data: FormData) => {
+  const mailsArray = (data.get('mails')?.toString() ?? '').split(',')
+  console.log(mailsArray)
+  const folderId = data.get('folder') as string
+
+  const supabase = createClient()
+
+  const mailsMap = mailsArray.map((email) => ({
+    email,
+    folder: parseInt(folderId)
+  }))
+
+  await supabase.from('mails_saved').insert(mailsMap)
+
+  revalidatePath('/')
+  redirect('/')
+}
+
+export const getFolders = async () => {
+  const supabase = createClient()
+  const { data: user } = await supabase.auth.getSession()
+
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('owner', user.session?.user.id ?? 0)
+
+  if (error != null) {
+    console.error('Error fetching folders:', error)
+    return []
+  }
+
+  const folders = data.map(async (folder) => {
+    const { data } = await supabase.from('mails_saved').select('*').eq('folder', folder.id)
+
+    return {
+      ...folder,
+      mails: (data ?? []).map((mail) => ({
+        ...mail,
+        checked: false
+      }))
+    }
+  })
+
+  return await Promise.all(folders)
 }
