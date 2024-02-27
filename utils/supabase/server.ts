@@ -1,6 +1,10 @@
+'use server'
+
 import { Database } from '@/database.types'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export const createClient = () => {
   const cookieStore = cookies()
@@ -34,6 +38,24 @@ export const createClient = () => {
       }
     }
   )
+}
+
+export const addMail = async (data: FormData) => {
+  const mailsArray = (data.get('mails')?.toString() ?? '').split(',')
+  console.log(mailsArray)
+  const folderId = data.get('folder') as string
+
+  const supabase = createClient()
+
+  const mailsMap = mailsArray.map((email) => ({
+    email,
+    folder: parseInt(folderId)
+  }))
+
+  await supabase.from('mails_saved').insert(mailsMap)
+
+  revalidatePath('/')
+  redirect('/')
 }
 
 export const getFolders = async () => {
