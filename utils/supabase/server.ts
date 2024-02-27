@@ -35,3 +35,32 @@ export const createClient = () => {
     }
   )
 }
+
+export const getFolders = async () => {
+  const supabase = createClient()
+  const { data: user } = await supabase.auth.getSession()
+
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('owner', user.session?.user.id ?? 0)
+
+  if (error != null) {
+    console.error('Error fetching folders:', error)
+    return []
+  }
+
+  const folders = data.map(async (folder) => {
+    const { data } = await supabase.from('mails_saved').select('*').eq('folder', folder.id)
+
+    return {
+      ...folder,
+      mails: (data ?? []).map((mail) => ({
+        ...mail,
+        checked: false
+      }))
+    }
+  })
+
+  return await Promise.all(folders)
+}
