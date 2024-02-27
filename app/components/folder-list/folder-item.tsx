@@ -38,7 +38,6 @@ export const FolderItem = ({ folder }: {
       </div>
 
       <AnimatePresence>
-
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -48,7 +47,8 @@ export const FolderItem = ({ folder }: {
             <ul>
               {(folder.mails ?? []).map((mail) => (
                 <li key={v4()} className='flex justify-between'>
-                  <h3>{mail.email}</h3> <input
+                  <span>{mail.email}</span>
+                  <input
                     type='checkbox' checked={Boolean(mails[mail.id])}
                     onChange={(e) => {
                       if (e.target.checked) {
@@ -57,7 +57,7 @@ export const FolderItem = ({ folder }: {
                         removeMail(mail)
                       }
                     }}
-                                        />
+                  />
                 </li>
               ))}
             </ul>
