@@ -86,3 +86,73 @@ export const getFolders = async () => {
 
   return await Promise.all(folders)
 }
+
+export const createFolder = async (formdata: FormData) => {
+  const supabase = createClient()
+  const name = formdata.get('folders') as string
+
+  const { data: user } = await supabase.auth.getSession()
+
+  const { error } = await supabase.from('folders').insert({
+    name,
+    owner: user.session?.user.id
+  })
+
+  if (error != null) {
+    console.error('Error creating folder:', error)
+    return
+  }
+
+  revalidatePath('/')
+  redirect('/')
+}
+
+export const createAcount = async (formdata: FormData) => {
+  const supabase = createClient()
+  const email = formdata.get('email') as string
+  const password = formdata.get('password') as string
+
+  const { data: user } = await supabase.auth.getSession()
+
+  const getMailServer = await supabase.from('mail_server').select('*').eq('owner', user.session?.user.id ?? '')
+
+  const mailServerID = Number(getMailServer.data?.[0].id)
+
+  const { error } = await supabase.from('mail_accounts').insert({
+    email,
+    mail_server: mailServerID,
+    password
+  })
+  console.log(email, mailServer, password)
+
+  if (error != null) {
+    console.error('Error creating account:', error)
+    return
+  }
+
+  revalidatePath('/')
+  redirect('/')
+}
+
+export const mailServer = async (formdata: FormData) => {
+  const supabase = createClient()
+  const url = formdata.get('url') as string
+  const port = formdata.get('port') as string
+
+  const { data: user } = await supabase.auth.getSession()
+
+  const { error } = await supabase.from('mail_server').insert({
+    url,
+    port,
+    owner: user.session?.user.id ?? ''
+  })
+  console.log(url, port)
+
+  if (error != null) {
+    console.error('Error creating mail server:', error)
+    return
+  }
+
+  revalidatePath('/')
+  redirect('/')
+}
