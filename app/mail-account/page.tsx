@@ -1,18 +1,24 @@
 import { createAcount } from '@/utils/supabase/server'
+import { LabeledInput } from '../components/forms/label-input'
 
 export default async function Account () {
   return (
     <form action={createAcount}>
       <div>
-        <label>
-          <span> email </span>
-          <input name='email' className='text-black' />
-        </label>
 
-        <label>
-          <span> password </span>
-          <input name='password' className='text-black' />
-        </label>
+        <LabeledInput
+          placeholder='example@example.com'
+          label='email'
+          type='email'
+          name='email' required
+        />
+        <LabeledInput
+          placeholder='*********'
+          label='password'
+          type='password'
+          name='password' required
+        />
+
         <button type='submit'>Create Mail Account</button>
       </div>
     </form>
