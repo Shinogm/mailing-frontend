@@ -3,6 +3,7 @@ import FolderIcon from '../folder-create/icon'
 import { AddMailIcon } from '../icons'
 import MailIcon from '../mail-account/icon'
 import MailServerIcon from '../mail-server/icon'
+import MailSend from '../mail/icon'
 
 export default async function IconsSection () {
   return (
@@ -57,6 +58,18 @@ export default async function IconsSection () {
               className='p-2 transition-colors duration-200 ease-in-out rounded-md cursor-pointer bg-blue-400/40 hover:bg-blue-400/90'
             >
               <MailServerIcon />
+
+            </div>
+          </Link>
+        </section>
+        <section
+          className='flex justify-end w-full p-1'
+        >
+          <Link href='/send'>
+            <div
+              className='p-2 transition-colors duration-200 ease-in-out rounded-md cursor-pointer bg-blue-400/40 hover:bg-blue-400/90'
+            >
+              <MailSend />
 
             </div>
           </Link>

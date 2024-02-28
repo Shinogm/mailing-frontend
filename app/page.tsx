@@ -1,6 +1,7 @@
 import IconsSection from './components/icon-section/Icons-section'
 import { FolderList } from './components/folder-list/folder-list'
 import { MailSender } from './components/mail-sender'
+import MailSends from './components/mail/mail-section'
 
 export default async function Index () {
   return (
@@ -9,6 +10,7 @@ export default async function Index () {
     >
       <IconsSection />
       <FolderList />
+      <MailSends />
       <MailSender />
     </main>
   )

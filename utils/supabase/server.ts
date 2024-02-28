@@ -5,6 +5,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import SendEmails from '@/utils/apicall/send'
 
 export const createClient = () => {
   const cookieStore = cookies()
@@ -155,4 +156,72 @@ export const mailServer = async (formdata: FormData) => {
 
   revalidatePath('/')
   redirect('/')
+}
+
+export const getServer = async () => {
+  const supabase = createClient()
+  const { data: user } = await supabase.auth.getSession()
+
+  const { data, error } = await supabase
+    .from('mail_server')
+    .select('*')
+    .eq('owner', user.session?.user.id ?? 0)
+
+  if (error != null) {
+    console.error('Error fetching mail server:', error)
+    return []
+  }
+
+  return data
+}
+
+export const sendMail = async (formdata: FormData, mails: string[]) => {
+  const supabase = createClient()
+  const server = formdata.get('servers') as string
+  const subject = formdata.get('subject') as string
+  const account = formdata.get('account') as string
+  const message = formdata.get('message') as string
+
+  const { data: user } = await supabase.auth.getSession()
+
+  const { data: mailServer } = await supabase.from('mail_server').select('*').eq('id', server ?? '')
+
+  const mailServerId = mailServer?.[0].id ?? 0
+
+  const mailAccounts = await getMailAccountsWhereMailServer(Number(account))
+  console.log(mailAccounts)
+
+  const contacts = mails.map((mail) => ({
+    email: mail
+  }))
+
+  const mailProperties = {
+    url: mailServer?.[0].url,
+    port: mailServer?.[0].port,
+    email: mailAccounts?.[0].email,
+    password: mailAccounts?.[0].password
+  }
+
+  const response = await SendEmails(subject, mailProperties, mails, message)
+
+  console.log(response)
+
+  revalidatePath('/')
+  redirect('/')
+}
+
+export const getMailAccountsWhereMailServer = async (mailServerId: number) => {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('mail_accounts')
+    .select('*')
+    .eq('mail_server', mailServerId)
+
+  if (error != null) {
+    console.error('Error fetching mail accounts:', error)
+    return []
+  }
+
+  return data
 }

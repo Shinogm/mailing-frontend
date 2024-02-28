@@ -4,6 +4,7 @@ import { v4 } from '@/utils/uuid'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { mailsCheckedStore } from '@/stores/mails-checked'
+import { getFolders } from '@/utils/supabase/server'
 
 export const FolderItem = ({ folder }: {
   folder: FolderWithMails
