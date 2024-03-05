@@ -35,17 +35,25 @@ export default function MailSends () {
       <form className='flex flex-col gap-3'>
         <span>Servers</span>
         <select
-          name='servers'
-          className='text-black'
-          onChange={(event) => {
-            const server = JSON.parse(event.target.value)
-            // setSelectedServer(() => server)
-          }}
-        >
-          {servers.map((servers) => (
-            <option key={v4()} value={JSON.stringify(servers)}>{servers.url}</option>
-          ))}
-        </select>
+            name='servers'
+            className='text-black'
+            onChange={(event) => {
+              const selectedServerId = event.target.value;
+              const server = servers.find(server => server.id === Number(selectedServerId));
+              setSelectedServer(server || null);
+              getMailAccountsWhereMailServer(Number(selectedServerId))
+                .then(accounts => {
+                  setAccounts(accounts)
+                  setSelectedAccount(accounts[0])
+                })
+                .catch(console.error)
+            }}
+>
+  {servers.map((server) => (
+    <option key={server.id} value={server.id}>{server.url}</option>
+  ))}
+</select>
+
         account
         <select name='account' className='text-black'>
           {accounts.map((account) => (
