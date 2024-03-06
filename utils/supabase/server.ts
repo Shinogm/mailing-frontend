@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import SendEmails from '@/utils/apicall/send'
+import nodemailer from 'nodemailer'
 
 export const createClient = () => {
   const cookieStore = cookies()
@@ -175,36 +176,58 @@ export const getServer = async () => {
   return data
 }
 
-export const sendMail = async (formdata: FormData, mails: string[]) => {
+export const sendMail = async (formdata: FormData, mails: string[], selectedAccount) => {
   const supabase = createClient()
+
   const server = formdata.get('servers') as string
   const subject = formdata.get('subject') as string
   const account = formdata.get('account') as string
   const message = formdata.get('message') as string
 
-  const { data: user } = await supabase.auth.getSession()
-
   const { data: mailServer } = await supabase.from('mail_server').select('*').eq('id', server ?? '')
-
-  const mailServerId = mailServer?.[0].id ?? 0
 
   const mailAccounts = await getMailAccountsWhereMailServer(Number(account))
   console.log(mailAccounts)
 
-  const contacts = mails.map((mail) => ({
-    email: mail
-  }))
+  const FindSelectedAccountWithClient = mailAccounts.find((account) => account.id === Number(account))
+
+  const contacts = mails.map((mail) => mail)
 
   const mailProperties = {
-    url: mailServer?.[0].url,
-    port: mailServer?.[0].port,
-    email: mailAccounts?.[0].email,
-    password: mailAccounts?.[0].password
+    url: mailServer?.[0].url ?? '',
+    port: mailServer?.[0].port ?? '',
+    email: mailAccounts?.[0].email ?? '',
+    password: mailAccounts?.[0].password ?? ''
   }
 
-  const response = await SendEmails(subject, mailProperties, mails, message)
+  console.log(mailProperties)
 
-  console.log(response)
+  const transporter = nodemailer.createTransport({
+    host: mailProperties.url,
+    port: Number(mailProperties.port),
+    secure: true,
+    auth: {
+      user: mailProperties.email,
+      pass: mailProperties.password
+    }
+  })
+
+  const mailOptions = {
+    from: mailProperties.email,
+    to: contacts.join(','),
+    subject,
+    text: message
+  }
+
+  console.log(mailOptions)
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error != null) {
+      console.error('Error sending mail:', error)
+    } else {
+      console.log('Mail sent:', info.response)
+    }
+  })
 
   revalidatePath('/')
   redirect('/')

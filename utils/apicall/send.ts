@@ -1,10 +1,10 @@
-const api = 'http://localhost:3001/mail/send'
+const api = 'http://192.168.1.20:3001/mail/send'
 
 export default async function SendEmails (
   title: string,
   mailProperties: {
     url: string
-    port: number
+    port: string
     email: string
     password: string
   },
@@ -12,14 +12,14 @@ export default async function SendEmails (
   html: string
 ) {
   const headers = new Headers()
-  headers.append('Content-Type', 'application/json')
   headers.append('accept', 'application/json')
+  headers.append('Content-Type', 'application/json')
 
   const options = {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      mailProperties,
+      mail_properties: mailProperties,
       mails,
       html
     })

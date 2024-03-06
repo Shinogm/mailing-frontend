@@ -1,7 +1,8 @@
 'use client'
 
 import { Database } from '@/database.types'
-import { getMailAccountsWhereMailServer, getServer } from '@/utils/supabase/server'
+import { mailsCheckedStore } from '@/stores/mails-checked'
+import { getFolders, getMailAccountsWhereMailServer, getServer, sendMail } from '@/utils/supabase/server'
 import { v4 } from '@/utils/uuid'
 import { useEffect, useState } from 'react'
 
@@ -10,6 +11,18 @@ export default function MailSends () {
   const [accounts, setAccounts] = useState<Array<Database['public']['Tables']['mail_accounts']['Row']>>([])
   const [selectedServer, setSelectedServer] = useState<Database['public']['Tables']['mail_server']['Row'] | null>(null)
   const [selectedAccount, setSelectedAccount] = useState<Database['public']['Tables']['mail_accounts']['Row'] | null>(null)
+  const mails = mailsCheckedStore((state) => Object.values(state.mails))
+
+  const getSelectedAcount = () => {
+    getMailAccountsWhereMailServer(selectedServer?.id as any)
+      .then(accounts => {
+        setAccounts(accounts)
+        setSelectedAccount(accounts[0])
+      })
+      .catch(console.error)
+  }
+
+  console.log(getSelectedAcount)
 
   console.log(selectedServer, selectedAccount)
 
@@ -32,27 +45,37 @@ export default function MailSends () {
   return (
     <main>
       <h1 className='text-center'>Enviar Correo</h1>
-      <form className='flex flex-col gap-3'>
+      <form
+        onSubmit={
+        (event) => {
+          event.preventDefault()
+          const formData = new FormData(event.currentTarget)
+          sendMail(formData, mails.map(mail => mail.email), selectedAccount as any)
+            .catch(console.error)
+        }
+      }
+        className='flex flex-col gap-3'
+      >
         <span>Servers</span>
         <select
-            name='servers'
-            className='text-black'
-            onChange={(event) => {
-              const selectedServerId = event.target.value;
-              const server = servers.find(server => server.id === Number(selectedServerId));
-              setSelectedServer(server || null);
-              getMailAccountsWhereMailServer(Number(selectedServerId))
-                .then(accounts => {
-                  setAccounts(accounts)
-                  setSelectedAccount(accounts[0])
-                })
-                .catch(console.error)
-            }}
->
-  {servers.map((server) => (
-    <option key={server.id} value={server.id}>{server.url}</option>
-  ))}
-</select>
+          name='servers'
+          className='text-black'
+          onChange={(event) => {
+            const selectedServerId = event.target.value
+            const server = servers.find(server => server.id === Number(selectedServerId))
+            setSelectedServer((server != null) ? server : null)
+            getMailAccountsWhereMailServer(Number(selectedServerId))
+              .then(accounts => {
+                setAccounts(accounts as any)
+                setSelectedAccount(accounts[0] as any)
+              })
+              .catch(console.error)
+          }}
+        >
+          {servers.map((server) => (
+            <option key={server.id} value={server.id}>{server.url}</option>
+          ))}
+        </select>
 
         account
         <select name='account' className='text-black'>
