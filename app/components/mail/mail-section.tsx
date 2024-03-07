@@ -1,30 +1,17 @@
 'use client'
 
-import { Database } from '@/database.types'
+import { Tables } from '@/database.types'
 import { mailsCheckedStore } from '@/stores/mails-checked'
-import { getFolders, getMailAccountsWhereMailServer, getServer, sendMail } from '@/utils/supabase/server'
+import { getMailAccountsWhereMailServer, getServer, sendMail } from '@/utils/supabase/server'
 import { v4 } from '@/utils/uuid'
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 
 export default function MailSends () {
-  const [servers, setServers] = useState<Array<Database['public']['Tables']['mail_server']['Row']>>([])
-  const [accounts, setAccounts] = useState<Array<Database['public']['Tables']['mail_accounts']['Row']>>([])
-  const [selectedServer, setSelectedServer] = useState<Database['public']['Tables']['mail_server']['Row'] | null>(null)
-  const [selectedAccount, setSelectedAccount] = useState<Database['public']['Tables']['mail_accounts']['Row'] | null>(null)
-  const mails = mailsCheckedStore((state) => Object.values(state.mails))
-
-  const getSelectedAcount = () => {
-    getMailAccountsWhereMailServer(selectedServer?.id as any)
-      .then(accounts => {
-        setAccounts(accounts)
-        setSelectedAccount(accounts[0])
-      })
-      .catch(console.error)
-  }
-
-  console.log(getSelectedAcount)
-
-  console.log(selectedServer, selectedAccount)
+  const [servers, setServers] = useState<Array<Tables<'mail_server'>>>([])
+  const [accounts, setAccounts] = useState<Array<Tables<'mail_accounts'>>>([])
+  const [selectedServer, setSelectedServer] = useState<Tables<'mail_server'> | null>(null)
+  const getMails = mailsCheckedStore((state) => state.getMails)
 
   useEffect(() => {
     getServer()
@@ -35,7 +22,6 @@ export default function MailSends () {
         getMailAccountsWhereMailServer(servers[0].id)
           .then(accounts => {
             setAccounts(accounts)
-            setSelectedAccount(accounts[0])
           })
           .catch(console.error)
       })
@@ -49,8 +35,18 @@ export default function MailSends () {
         onSubmit={
         (event) => {
           event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          sendMail(formData, mails.map(mail => mail.email), selectedAccount as any)
+          const mails = getMails()
+
+          const mailConfig = {
+            serverId: z.coerce.number().parse(event.currentTarget.servers.value),
+            accountId: z.coerce.number().parse(event.currentTarget.account.value),
+            message: z.coerce.string().parse(event.currentTarget.message.value),
+            subject: z.coerce.string().parse(event.currentTarget.subject.value)
+          }
+
+          console.log(mailConfig, mails)
+
+          sendMail(mailConfig, mails)
             .catch(console.error)
         }
       }
@@ -63,24 +59,26 @@ export default function MailSends () {
           onChange={(event) => {
             const selectedServerId = event.target.value
             const server = servers.find(server => server.id === Number(selectedServerId))
-            setSelectedServer((server != null) ? server : null)
+            setSelectedServer(server ?? null)
             getMailAccountsWhereMailServer(Number(selectedServerId))
               .then(accounts => {
                 setAccounts(accounts as any)
-                setSelectedAccount(accounts[0] as any)
               })
               .catch(console.error)
           }}
+          value={selectedServer?.id ?? ''}
         >
           {servers.map((server) => (
-            <option key={server.id} value={server.id}>{server.url}</option>
+            <option key={v4()} value={server.id}>{server.url}</option>
           ))}
         </select>
 
         account
-        <select name='account' className='text-black'>
+        <select
+          name='account' className='text-black'
+        >
           {accounts.map((account) => (
-            <option key={v4()} value={account.mail_server}>{account.email}</option>
+            <option key={v4()} value={account.id}>{account.email}</option>
           ))}
         </select>
         asunto
