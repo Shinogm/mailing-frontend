@@ -112,16 +112,12 @@ export const createAcount = async (formdata: FormData) => {
   const supabase = createClient()
   const email = formdata.get('email') as string
   const password = formdata.get('password') as string
+  const mailServer = formdata.get('servers') as string
 
-  const { data: user } = await supabase.auth.getSession()
-
-  const getMailServer = await supabase.from('mail_server').select('*').eq('owner', user.session?.user.id ?? '')
-
-  const mailServerID = Number(getMailServer.data?.[0].id)
-
+  const { data: getMailServer } = await supabase.from('mail_server').select('*').eq('id', Number(mailServer) ?? null).single()
   const { error } = await supabase.from('mail_accounts').insert({
     email,
-    mail_server: mailServerID,
+    mail_server: getMailServer?.id ?? 0,
     password
   })
   console.log(email, mailServer, password)
