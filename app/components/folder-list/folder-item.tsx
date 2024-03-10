@@ -4,7 +4,6 @@ import { v4 } from '@/utils/uuid'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { mailsCheckedStore } from '@/stores/mails-checked'
-import { getFolders } from '@/utils/supabase/server'
 
 export const FolderItem = ({ folder }: {
   folder: FolderWithMails
@@ -13,8 +12,8 @@ export const FolderItem = ({ folder }: {
   const mails = mailsCheckedStore((state) => state.mails)
   const addMail = mailsCheckedStore((state) => state.addMail)
   const removeMail = mailsCheckedStore((state) => state.removeMail)
-
-  const ifAllChecked = folder.mails.every((mail) => mails[mail.id])
+  const isAll = mailsCheckedStore((state) => state.ifAllChecked)
+  const ifAllChecked = isAll(folder)
 
   return (
     <li className='min-w-96'>

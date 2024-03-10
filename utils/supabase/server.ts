@@ -5,7 +5,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import SendEmails from '@/utils/apicall/send'
 import nodemailer from 'nodemailer'
 
 export const createClient = () => {
@@ -113,16 +112,12 @@ export const createAcount = async (formdata: FormData) => {
   const supabase = createClient()
   const email = formdata.get('email') as string
   const password = formdata.get('password') as string
+  const mailServer = formdata.get('servers') as string
 
-  const { data: user } = await supabase.auth.getSession()
-
-  const getMailServer = await supabase.from('mail_server').select('*').eq('owner', user.session?.user.id ?? '')
-
-  const mailServerID = Number(getMailServer.data?.[0].id)
-
+  const { data: getMailServer } = await supabase.from('mail_server').select('*').eq('id', Number(mailServer) ?? null).single()
   const { error } = await supabase.from('mail_accounts').insert({
     email,
-    mail_server: mailServerID,
+    mail_server: getMailServer?.id ?? 0,
     password
   })
   console.log(email, mailServer, password)
@@ -176,28 +171,29 @@ export const getServer = async () => {
   return data
 }
 
-export const sendMail = async (formdata: FormData, mails: string[], selectedAccount) => {
+export const sendMail = async (formdata: {
+  serverId: number
+  accountId: number
+  message: string
+  subject: string
+}, mails: string[]) => {
   const supabase = createClient()
 
-  const server = formdata.get('servers') as string
-  const subject = formdata.get('subject') as string
-  const account = formdata.get('account') as string
-  const message = formdata.get('message') as string
+  const server = formdata.serverId
+  const subject = formdata.subject
+  const account = formdata.accountId
+  const message = formdata.message
 
-  const { data: mailServer } = await supabase.from('mail_server').select('*').eq('id', server ?? '')
+  const { data: mailServer } = await supabase.from('mail_server').select('*').eq('id', server ?? '').single()
+  const { data: mailAccount } = await supabase.from('mail_accounts').select('*').eq('id', account ?? '').single()
 
-  const mailAccounts = await getMailAccountsWhereMailServer(Number(account))
-  console.log(mailAccounts)
-
-  const FindSelectedAccountWithClient = mailAccounts.find((account) => account.id === Number(account))
-
-  const contacts = mails.map((mail) => mail)
+  const contacts = mails
 
   const mailProperties = {
-    url: mailServer?.[0].url ?? '',
-    port: mailServer?.[0].port ?? '',
-    email: mailAccounts?.[0].email ?? '',
-    password: mailAccounts?.[0].password ?? ''
+    url: mailServer?.url,
+    port: mailServer?.port,
+    email: mailAccount?.email,
+    password: mailAccount?.password
   }
 
   console.log(mailProperties)
