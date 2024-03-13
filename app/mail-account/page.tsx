@@ -19,7 +19,7 @@ export default function Account () {
       .catch(console.error)
   }, [])
   return (
-    <form action={createAcount}>
+    <form action={createAcount} className='mb-4 p-2 rounded-md w-96 mx-auto'>
       <div>
 
         <LabeledInput
@@ -34,10 +34,10 @@ export default function Account () {
           type='password'
           name='password' required
         />
-
+          <span className='flex'>Servers</span>
         <select
           name='servers'
-          className='text-black'
+          className='text-black w-full p-1'
           onChange={(event) => {
             const selectedServerId = event.target.value
             const server = servers.find(server => server.id === Number(selectedServerId))
@@ -49,8 +49,9 @@ export default function Account () {
             <option key={v4()} value={server.id}>{server.url}</option>
           ))}
         </select>
-
-        <button type='submit'>Create Mail Account</button>
+        <div className='flex justify-center mt-4'>
+        <button type='submit' className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded '>Create Mail Account</button>
+        </div>
       </div>
     </form>
   )
